@@ -255,13 +255,13 @@ sequelize.authenticate().then(() => {
 Interfața aplicației conține un set de 3 tab-uri: "Data Base", "iTunes" și "Lyrics". Pentru interfață s-au folosit stiluri din fișierul *style.css*, directorul *frontend*, cu ajutorul cărora am realizat structura de tab și am modificat modul în care sunt afișate tabele.
 
 În tab-ul __Data Base__ sunt gestionate datele din Baza de Data.
-![Data Base]()
+![Data Base](https://user-images.githubusercontent.com/55355410/117709563-c2412180-b1d9-11eb-99f5-67ceb89c491f.png)
 
 În tab-ul __iTunes__ sunt gestionate datele preluate prin intermediul API REST din aplicația iTunes Store.
-![iTunes]()
+![iTunes](https://user-images.githubusercontent.com/55355410/117709582-c79e6c00-b1d9-11eb-9a82-45bc4f383059.png)
 
 În tab-ul __Lyrics__ sunt gestionate datele preluate prin intermediul API REST de pe website-ul Lyrics.ovh.
-![Lyrics]()
+![Lyrics](https://user-images.githubusercontent.com/55355410/117709593-cc632000-b1d9-11eb-8a56-c701ba41270a.png)
 
 ## Referințe
 * [Cloud Computing - National Institute of Standards and Technology](https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-145.pdf)
