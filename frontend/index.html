@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="style.css" type="text/css"/>
+        <title>Songs List</title>
+    </head>
+    <body>
+        <h1>Songs</h1>
+    </body>
+    
+    <div class="tab">
+        <button class="tablinks active" onclick="openTab(event, 'dataBase')">Data Base</button>
+        <button class="tablinks" onclick="openTab(event, 'iTunes')">iTunes</button>
+        <button class="tablinks" onclick="openTab(event, 'lyrics')">Song Lyrics</button>
+    </div>
+    
+    <div id="iTunes" class="tabcontent">
+        <div class="row">
+            <div class="column">
+                Artist or Song Name<br/>
+                <input type="text" name="searchValue" id="searchValue"/>
+            </div>
+            <div class="column">
+                Results Number<br/>
+                <input type="number" id="resultsNumber" name="resultsNumber" min="1" max="100">
+            </div>
+            <div class="column">
+                <button onClick="dataPullITunes()">Search</button> <br/> <br/>
+            </div>
+        </div>
+        <div id="tableITunes"></div>
+    </div>
+    
+    <div id="lyrics" class="tabcontent">
+        <div class="row">
+            <div class="column">
+                Artist Name<br/>
+                <input type="text" name="artistLyrics" id="artistLyrics"/>
+            </div>
+            <div class="column">
+                Song Title<br/>
+                <input type="text" name="songLyrics" id="songLyrics"/>
+            </div>
+            <div class="column">
+                <button onClick="dataPullLyrics()">Search</button> <br/> <br/>
+            </div>
+        </div>
+        <div id="showLyrics"></div>
+    </div>
+    
+    <div id="dataBase" class="tabcontent active" style="display: block">
+        <form onSubmit="saveSong(event)">
+            <input type="hidden" name="id" id="id"/> <br/>
+            Artist Name:<br/>
+            <input type="text" name="singer" id="singer"/> <br/>
+            Album:<br/>
+            <input type="text" name="album" id="album"> <br/>
+            Song Name:<br/>
+            <textarea name="name" id="name"></textarea> <br/>
+            <input type="submit" value="Save song">
+            <input type="reset" value="Cancel">
+        </form>
+        <br/>
+        <div id="table"></div>
+    </div>
+    
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <script 
+        src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+        
+    <script type="text/javascript">
+        //Manage Tabs
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+        
+        //Pull data from iTunes using API
+        function dataPullITunes() {
+            let searchValue = $('#searchValue').val()
+            let resultsNumber = $('#resultsNumber').val()
+            let urlEncoded = encodeURI("https://itunes.apple.com/search?term='" + searchValue + "'&limit=" + resultsNumber + "&media=music")
+            axios.get(urlEncoded)
+            .then(function(response) { 
+                if(response.data.results.length > 0) {
+                    let htmlITunes = ` <table >
+                            <tr>
+                                <th>Artist</th>
+                                <th>Song Name</th>
+                                <th>Collection</th>
+                                <th>Country</th>
+                                <th>Preview Song</th>
+                            </tr>`
+                            
+                    response.data.results.forEach(function(song) {
+                        htmlITunes += `<tr>
+                                    <td>${song.artistName}</td>
+                                    <td>${song.trackName}</td>
+                                    <td>${song.collectionName}</td>
+                                    <td>${song.country}</td>
+                                    <td>
+                                        <audio controls>
+                                            <source src="${song.previewUrl}" type="audio/mpeg">
+                                            Your browser does not support the audio element.
+                                        </audio>
+                                    </td>
+                                </tr>`
+                    })
+                    
+                    htmlITunes += `</table>`
+                    
+                    $('#tableITunes').html(htmlITunes)
+                } else {
+                    throw "No items available! Please search for another song."
+                }
+            })
+            .catch(function(error) {
+                console.log(error)
+                $('#tableITunes').html(`<p>No items available! Please search for another song.</p>`)
+            })
+        }
+        
+        //Pull data from Lyrics.ovh using API
+        function dataPullLyrics() {
+            let artist = $('#artistLyrics').val()
+            let title = $('#songLyrics').val()
+            axios.get("https://api.lyrics.ovh/v1/" + artist + "/" + title)
+            .then(function(response) { 
+                let lyricsText = response.request.responseText
+                let lyricsTextHtml = lyricsText.replace(/\\n/g, "<br/>")
+                let lyricsJSON = JSON.parse(lyricsTextHtml)
+                $('#showLyrics').html(`<p>${lyricsJSON.lyrics}</p>`)
+            })
+            .catch(function(error) {
+                console.log(error)
+                $('#showLyrics').html(`<p>No lyrics available! Please search for another song.</p>`)
+            })
+        }
+  
+        //Display all songs from Data Base
+        function showSongs() {
+            axios.get('/songs').then(function(results) {
+                let html = ` <table style="width:500px;">
+                        <tr>
+                            <th>ID</th>
+                            <th>Artist Name</th>
+                            <th>Album</th> 
+                            <th>Song Name</th>
+                            <th>Actions</th>
+                        </tr>`
+                
+                results.data.forEach(function(element) {
+                    html += `<tr>
+                                <td>${element.id}</td>
+                                <td>${element.singer}</td>
+                                <td>${element.album}</td>
+                                <td>${element.name}</td>
+                                <td>
+                                    <button onClick="editSong(${element.id})">Edit</button>
+                                    <button onClick="deleteSong(${element.id})">Delete</button>
+                                </td>
+                            </tr>`
+                })
+
+                html += `</table>`
+                
+                $('#table').html(html)
+            }).catch(function(error) {
+                console.log(error)
+            })
+        }
+
+        //Insert a song to Data Base
+        function saveSong(event) {
+            event.preventDefault()
+            
+            let id = $('#id').val()
+            let singer = $('#singer').val()
+            let album = $('#album').val()
+            let name = $('#name').val()
+            
+            if(id) {
+                axios.put('/songs/'+id, {
+                    singer: singer,
+                    album: album,
+                    name: name
+                }).then(function(result) {
+                    showSongs()
+                    $(event.target).trigger("reset")
+                }).catch(function(err) {
+                    alert('Resource could not be saved')
+                })
+            } else {
+                axios.post('/songs', {
+                    singer: singer,
+                    album: album,
+                    name: name
+                }).then(function(result) {
+                    showSongs()
+                    $(event.target).trigger("reset")
+                }).catch(function(err) {
+                    alert('Resource could not be saved')
+                })
+            }
+        }
+        
+        //Update a song from Data Base
+        function editSong(id) {
+            axios.get('/songs/'+id).then(function(result) {
+                $('#id').val(result.data.id)
+                $('#singer').val(result.data.singer)
+                $('#album').val(result.data.album)
+                $('#name').val(result.data.name) 
+            }).catch(function(error) {
+                console.log(error)
+                alert('Could not find resource')
+            })
+        }
+
+        //Delete a song from Data Base
+        function deleteSong(id) {
+            axios.delete('/songs/'+id).then(function(result) {
+                showSongs()
+            }).catch(function(error) {
+                console.log(error)
+                alert('Resource could not delete resource')
+            }) 
+        }
+        
+        //Run when the page is first loaded
+        $(document).ready(function() {
+            showSongs()
+        })
+    </script>
+</html>
